@@ -3,7 +3,7 @@ use itertools::{self, Itertools};
 
 use sycamore::{prelude::*, rt::Event};
 use wasm_bindgen::__rt::IntoJsResult;
-use web_sys::MouseEvent;
+use web_sys::{Element, MouseEvent};
 
 pub const CIRCLERADIUS: f64 = 10.0;
 
@@ -41,12 +41,18 @@ fn App<G: Html>(cx: Scope) -> View<G> {
     );
 
     view! {cx,
-        div(){
+        main(class="container-fluid"){
             SVG ()
-            ConcaveHullControl()
-            ConvexHullControl{}
-            KNearestConcaveHullControl{}
-            ClearButton{}
+        }
+        
+        footer(){
+            div(class="container")
+            {
+                ConvexHullControl{}
+                ConcaveHullControl()
+                KNearestConcaveHullControl{}
+                ClearButton{}
+            }
         }
 
     }
@@ -55,16 +61,20 @@ fn App<G: Html>(cx: Scope) -> View<G> {
 #[component()]
 fn SVG<'a, G: Html>(cx: Scope<'a>) -> View<G> {
     let points = use_context::<Signal<MultiPoint<f64>>>(cx);
+    let node_ref = create_node_ref(cx);
+
     return view! { cx,
 
-        svg(height="500",
-        width="500",
+        svg(
+            ref=node_ref,
+            height="500",
+        width="100%",
         style="background: lightblue;",
         xmlns="http://www.w3.org/2000/svg",
-        on:click=|ev: Event| add_or_remove_point(points, get_point(ev))  ) {
+        on:click=|ev: Event| add_or_remove_point(points, get_point(ev, node_ref))  ) {
 
             (View::new_fragment(
-                points.get().0.iter().map(|&p| view! { cx, circle(cx=p.x(), cy=p.y(), r= {CIRCLERADIUS} ) }).collect()
+                points.get().0.iter().map(|&p| view! { cx, circle(cx=p.x(), cy=p.y(), color="black", r= {CIRCLERADIUS} ) }).collect()
             ))
 
             K_Nearest_Concave_Hull_Path{}
@@ -154,10 +164,14 @@ fn add_or_remove_point(points: &Signal<MultiPoint>, point: Point) {
     }
 }
 
-fn get_point(event: Event) -> Point {
+fn get_point<G: Html>(event: Event, node_ref: &NodeRef<G>) -> Point {
     let me: MouseEvent = event.into_js_result().unwrap().try_into().unwrap();
+    let node = node_ref.get::<DomNode>();
+    let element: Element = node.unchecked_into();
 
-    Point::new(me.x() as f64, me.y() as f64)
+    let rect = element.get_bounding_client_rect();
+
+    Point::new(me.x() as f64 - rect.x(), me.y() as f64 - rect.y())
 }
 
 fn get_path_string(polygon: &Polygon) -> String {
@@ -170,6 +184,46 @@ fn get_path_string(polygon: &Polygon) -> String {
     s.push_str("Z");
 
     s
+}
+
+#[component(inline_props)]
+fn LabelledCheckbox<'a, G: Html>(cx: Scope<'a>, signal: &'a Signal<bool>, str: &'a str) -> View<G> {
+    view! { cx,
+        label(for="checkbox"){
+            (str.to_string())
+            input(type="checkbox", name="checkbox", bind:checked=signal)
+        }
+    }
+}
+
+#[component(inline_props)]
+fn NumberInput<'a, G: Html>(
+    cx: Scope<'a>,
+    signal: &'a Signal<f64>,
+    str: &'a str,
+    min: f64,
+    max: f64,
+    step: f64,
+) -> View<G> {
+    view! { cx,
+        label(for="slider"){
+            (format!("{}: {}", str, signal.get() ) )
+            input(type="range", name="slider",  min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
+            // input(type="number", min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
+        }
+    }
+}
+
+#[component()]
+fn ConvexHullControl<'a, G: Html>(cx: Scope<'a>) -> View<G> {
+    let settings = use_context::<Signal<ConvexHullSettings>>(cx);
+
+    let show_signal = create_signal(cx, settings.get().show);
+    create_effect(cx, || settings.modify().show = *show_signal.get());
+
+    view! { cx,
+        LabelledCheckbox(signal= show_signal, str= "Convex Hull ")
+    }
 }
 
 #[component()]
@@ -185,28 +239,9 @@ fn ConcaveHullControl<'a, G: Html>(cx: Scope<'a>) -> View<G> {
     create_effect(cx, || settings.modify().concavity = *concavity_signal.get());
 
     view! { cx,
-        div(){
-            label(){"Concave Hull"}
-            input(type="checkbox", bind:checked=show_signal)
-            input(type="range", min="0", step="0.001", max="1", bind:valueAsNumber=concavity_signal) {}
-            input(type="number", min="0", step="0.001", max="1", bind:valueAsNumber=concavity_signal) {}
-        }
+        LabelledCheckbox(signal= show_signal, str= "Concave Hull ")
+        NumberInput(signal=concavity_signal, str= "Concavity", min = 0.0, max = 1.0, step= 0.001)
 
-    }
-}
-
-#[component()]
-fn ConvexHullControl<'a, G: Html>(cx: Scope<'a>) -> View<G> {
-    let settings = use_context::<Signal<ConvexHullSettings>>(cx);
-
-    let show_signal = create_signal(cx, settings.get().show);
-    create_effect(cx, || settings.modify().show = *show_signal.get());
-
-    view! { cx,
-        div(){
-            label(){"Convex Hull"}
-            input(type="checkbox", bind:checked=show_signal)
-        }
     }
 }
 
@@ -225,12 +260,8 @@ fn KNearestConcaveHullControl<'a, G: Html>(cx: Scope<'a>) -> View<G> {
     });
 
     view! { cx,
-        div(){
-            label(){"K Nearest Concave Hull"}
-            input(type="checkbox", bind:checked=show_signal)
-            input(type="range", min="1", step="1", max="10", bind:valueAsNumber=points_signal) {}
-            input(type="number", min="1", step="1", max="10", bind:valueAsNumber=points_signal) {}
-        }
+        LabelledCheckbox(signal= show_signal, str= "K Nearest Concave Hull ")
+        NumberInput(signal=points_signal, str= "Points", min = 1.0, max = 10.0, step= 1.0)
 
     }
 }

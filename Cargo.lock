@@ -276,9 +276,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.135"
+version = "0.2.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68783febc7782c6c5cb401fbda4de5a9898be1762314da0bb2c10ced61f18b0c"
+checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
 
 [[package]]
 name = "libm"
@@ -338,9 +338,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1"
+checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "paste"
@@ -541,7 +541,7 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "sycamore"
 version = "0.8.2"
-source = "git+https://github.com/sycamore-rs/sycamore#abd556cbc02047042dad2ebd04405e455a9b11b2"
+source = "git+https://github.com/sycamore-rs/sycamore#6eb3422b8821247fd8237025580be02e1fcbb5de"
 dependencies = [
  "ahash",
  "indexmap",
@@ -558,7 +558,7 @@ dependencies = [
 [[package]]
 name = "sycamore-core"
 version = "0.8.2"
-source = "git+https://github.com/sycamore-rs/sycamore#abd556cbc02047042dad2ebd04405e455a9b11b2"
+source = "git+https://github.com/sycamore-rs/sycamore#6eb3422b8821247fd8237025580be02e1fcbb5de"
 dependencies = [
  "ahash",
  "sycamore-reactive",
@@ -567,7 +567,7 @@ dependencies = [
 [[package]]
 name = "sycamore-macro"
 version = "0.8.2"
-source = "git+https://github.com/sycamore-rs/sycamore#abd556cbc02047042dad2ebd04405e455a9b11b2"
+source = "git+https://github.com/sycamore-rs/sycamore#6eb3422b8821247fd8237025580be02e1fcbb5de"
 dependencies = [
  "once_cell",
  "proc-macro2",
@@ -578,7 +578,7 @@ dependencies = [
 [[package]]
 name = "sycamore-reactive"
 version = "0.8.1"
-source = "git+https://github.com/sycamore-rs/sycamore#abd556cbc02047042dad2ebd04405e455a9b11b2"
+source = "git+https://github.com/sycamore-rs/sycamore#6eb3422b8821247fd8237025580be02e1fcbb5de"
 dependencies = [
  "ahash",
  "bumpalo",
@@ -590,7 +590,7 @@ dependencies = [
 [[package]]
 name = "sycamore-web"
 version = "0.8.2"
-source = "git+https://github.com/sycamore-rs/sycamore#abd556cbc02047042dad2ebd04405e455a9b11b2"
+source = "git+https://github.com/sycamore-rs/sycamore#6eb3422b8821247fd8237025580be02e1fcbb5de"
 dependencies = [
  "html-escape",
  "indexmap",
