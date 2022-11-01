@@ -1,11 +1,12 @@
 use geo::{prelude::*, MultiPoint, Point, Polygon};
 use itertools::{self, Itertools};
 
+use rand::{rngs::StdRng, Rng};
 use sycamore::{prelude::*, rt::Event};
 use wasm_bindgen::__rt::IntoJsResult;
-use web_sys::{Element, MouseEvent};
+use web_sys::{Document, Element, MouseEvent};
 
-pub const CIRCLERADIUS: f64 = 10.0;
+pub const CIRCLERADIUS: f64 = 5.0;
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::default());
@@ -44,13 +45,14 @@ fn App<G: Html>(cx: Scope) -> View<G> {
         main(class="container-fluid"){
             SVG ()
         }
-        
+
         footer(){
             div(class="container")
             {
                 ConvexHullControl{}
                 ConcaveHullControl()
                 KNearestConcaveHullControl{}
+                AddPointsButton{}
                 ClearButton{}
             }
         }
@@ -66,6 +68,7 @@ fn SVG<'a, G: Html>(cx: Scope<'a>) -> View<G> {
     return view! { cx,
 
         svg(
+            id= "svg",
             ref=node_ref,
             height="500",
         width="100%",
@@ -207,9 +210,9 @@ fn NumberInput<'a, G: Html>(
 ) -> View<G> {
     view! { cx,
         label(for="slider"){
-            (format!("{}: {}", str, signal.get() ) )
-            input(type="range", name="slider",  min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
-            // input(type="number", min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
+            (str.to_string())
+            input(type="range", style= "width: max-content;", name="slider",  min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
+             input(type="number", style= "width: max-content;", min={min}, step={step}, max={max}, bind:valueAsNumber=signal) {}
         }
     }
 }
@@ -271,11 +274,50 @@ fn ClearButton<'a, G: Html>(cx: Scope<'a>) -> View<G> {
     let points = use_context::<Signal<MultiPoint<f64>>>(cx);
 
     return view! { cx,
-        button(
+        button(style="width: max-content;",
+        disabled=points.get().0.is_empty(),
         on:click=|_|  {points.modify().0.clear()}  )
         {
-            "Clear All Points"
+            (format!("Clear {} Points", points.get().0.len()))
         }
+    };
+}
+
+#[component()]
+fn AddPointsButton<'a, G: Html>(cx: Scope<'a>) -> View<G> {
+    let points = use_context::<Signal<MultiPoint<f64>>>(cx);
+
+    let number = create_signal(cx, 50.0);
+
+    let create_points = |_| {
+        let window = web_sys::window().unwrap();
+        let document = window.document().unwrap();
+        let svg = document.get_element_by_id("svg").unwrap();
+        let width: f64 = svg.client_width().into();
+        let height: f64 = svg.client_height().into();
+
+        // Document::get_element_by_id("svg");
+
+        let num = *number.get() as usize;
+        let seed: u64 = rand::random();
+        let mut rng: StdRng = rand::SeedableRng::seed_from_u64(seed);
+        let mut mut_points = points.modify();
+
+        let iter = (0..num).map(|_| {
+            let x = rng.gen_range(0.0..width);
+            let y = rng.gen_range(0.0..height);
+            Point::new(x, y)
+        });
+        mut_points.0.extend(iter);
+    };
+
+    return view! { cx,
+        button(style="width: max-content;",
+        on:click=create_points)
+        {
+            "Add Points"
+        }
+        NumberInput(str="Number", min=1.0, max=100.0, step=1.0, signal= number)
     };
 }
 
